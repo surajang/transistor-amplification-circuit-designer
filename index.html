@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BJT Common Emitter 설계 계산기</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; display: flex; justify-content: center; padding: 20px; }
+        .container { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); max-width: 500px; width: 100%; }
+        h2 { color: #2c3e50; text-align: center; margin-bottom: 25px; }
+        .input-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; color: #34495e; }
+        input { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; }
+        button { width: 100%; padding: 12px; background-color: #3498db; color: white; border: none; border-radius: 6px; font-size: 16px; cursor: pointer; transition: background 0.3s; margin-top: 10px; }
+        button:hover { background-color: #2980b9; }
+        .result { margin-top: 25px; padding: 20px; background-color: #e8f4fd; border-radius: 8px; display: none; }
+        .result h3 { margin-top: 0; color: #2980b9; border-bottom: 2px solid #b3d7f2; padding-bottom: 10px; }
+        .res-item { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px dashed #cfd9df; }
+        .res-item:last-child { border-bottom: none; }
+        .unit { font-weight: normal; color: #7f8c8d; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>CE 증폭기 부품 계산기</h2>
+    
+    <div class="input-group">
+        <label>전원 전압 ($V_{CC}$) [V]</label>
+        <input type="number" id="vcc" value="9" step="0.1">
+    </div>
+    <div class="input-group">
+        <label>전류 이득 ($h_{FE}$)</label>
+        <input type="number" id="hfe" value="100">
+    </div>
+    <div class="input-group">
+        <label>베이스-이미터 전압 ($V_{BE(on)}$) [V]</label>
+        <input type="number" id="vbe" value="0.7" step="0.1">
+    </div>
+    <div class="input-group">
+        <label>목표 콜렉터 전류 ($I_C$) [mA]</label>
+        <input type="number" id="ic" value="1" step="0.1">
+    </div>
+    <div class="input-group">
+        <label>이미터 전압 강하 설정 ($V_E$) [V]</label>
+        <input type="number" id="ve_target" value="1" step="0.1" placeholder="안정성을 위해 보통 1V 권장">
+    </div>
+
+    <button onclick="calculate()">부품 사양 계산하기</button>
+
+    <div id="resultBox" class="result">
+        <h3>계산된 부품 값</h3>
+        <div class="res-item"><span>콜렉터 저항 ($R_C$):</span> <strong id="rc_val"></strong> <span class="unit">kΩ</span></div>
+        <div class="res-item"><span>이미터 저항 ($R_E$):</span> <strong id="re_val"></strong> <span class="unit">kΩ</span></div>
+        <div class="res-item"><span>바이어스 저항 ($R_1$):</span> <strong id="r1_val"></strong> <span class="unit">kΩ</span></div>
+        <div class="res-item"><span>바이어스 저항 ($R_2$):</span> <strong id="r2_val"></strong> <span class="unit">kΩ</span></div>
+        <p style="font-size: 0.85em; color: #7f8c8d; margin-top: 15px;">* 실제 조립 시 가장 가까운 표준 저항(E24 계열 등)을 사용하세요.</p>
+    </div>
+</div>
+
+<script>
+    function calculate() {
+        // 입력값 가져오기
+        const Vcc = parseFloat(document.getElementById('vcc').value);
+        const hfe = parseFloat(document.getElementById('hfe').value);
+        const Vbe = parseFloat(document.getElementById('vbe').value);
+        const Ic_ma = parseFloat(document.getElementById('ic').value);
+        const Ve = parseFloat(document.getElementById('ve_target').value);
+        
+        const Ic = Ic_ma / 1000; // A 단위 변환
+
+        // 1. Rc 계산 (Vc를 Vcc의 절반으로 설정)
+        // Vc = Vcc - (Ic * Rc) = Vcc / 2
+        // Rc = (Vcc / 2) / Ic
+        const Rc = (Vcc / 2) / Ic;
+
+        // 2. Re 계산
+        const Re = Ve / Ic;
+
+        // 3. 바이어스 저항 계산
+        const Vb = Ve + Vbe;
+        const Ib = Ic / hfe;
+        const I_divider = Ib * 10; // 강성 바이어스를 위한 10배 규칙
+
+        const R2 = Vb / I_divider;
+        const R1 = (Vcc - Vb) / I_divider;
+
+        // 결과 표시 (kOhm 단위로 표시)
+        document.getElementById('rc_val').innerText = (Rc / 1000).toFixed(2);
+        document.getElementById('re_val').innerText = (Re / 1000).toFixed(2);
+        document.getElementById('r1_val').innerText = (R1 / 1000).toFixed(2);
+        document.getElementById('r2_val').innerText = (R2 / 1000).toFixed(2);
+
+        document.getElementById('resultBox').style.display = 'block';
+    }
+</script>
+
+</body>
+</html>
